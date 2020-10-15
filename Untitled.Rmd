@@ -1,0 +1,191 @@
+---
+title: "initial data analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+#Load in the data!
+```{r}
+library(readr)
+chronic_absenteeism <- read_csv("chronic_absenteeism.csv")
+View(chronic_absenteeism)
+
+chronic_absenteeism <- chronic_absenteeism[,1:10]
+```
+
+
+#Agency code seems to refer to the school district and then the school itself. We haven't yet found a list of individual school codes. But, we do have school district codes. I want to split the agency_code column in two. 
+
+```{r}
+chronic_absenteeism <- chronic_absenteeism %>% mutate(district_code = str_sub(chronic_absenteeism$agency_code,1,3))
+  
+  
+```
+
+
+#Subgroups refer to certain races, sexes, and English proficiency levels. Using the code definitions we can replace confusing strings. Use openrefine to update the dataframe and come back. Then create a dataframe that shows percentage of chronically absent students. Each three-number code should be a row, and each column should be one of the categories. Create one dataframe for 2018 and 2019. 
+
+```{r}
+
+chronic_absenteeism_2018 <- chronic_absenteeism %>% filter(year == "2018") %>% group_by(district_code,subgroup) %>% summarise(pct = mean(pct)) %>% pivot_wider(names_from = subgroup,values_from = pct)
+
+
+chronic_absenteeism_2019 <- chronic_absenteeism %>% filter(year == "2019") %>% group_by(district_code,subgroup) %>% summarise(avg_pct = mean(pct)) %>% pivot_wider(names_from = subgroup,values_from = pct)
+```
+
+
+#Let's find out which district had the highest percentage of all students be chronically absent in 2018 and 2019. 
+```{r}
+#1. For 2018
+chronic_absenteeism_2018%>% arrange(desc(ALL))
+
+#Now this is weird. 200 percent? Let's double check some things. 
+chronic_absenteeism %>% filter(district_code == "93L" | district_code == "60U" | district_code =="61L") 
+
+#The original percentage columns show 2.27, which I believe means 227 percent. We need to ask about that.Also the schools with the highest chronic absences are all charter schools. 
+
+#Answer: 93L, 60U, 61L, 06A. We can trace these to exact schools. 
+#1. Central Wake Charter High School
+#2. Commonwealth High School
+#3. Stewart Creek High School
+#4. Grandfather Academy 
+
+
+#1. For 2019
+chronic_absenteeism_2019%>% arrange(desc(ALL))
+
+#Answer: 60U, 61L, 93L, 06A in that order. Clearly there's a pattern? 
+
+
+```
+
+
+#Now do it for american indian students. 
+```{r}
+
+#1. In 2018 
+chronic_absenteeism_2018%>% arrange(desc(american_indian))
+#Answer: 93A, 780, 78A, 870. 
+
+
+
+#1. In 2019 
+chronic_absenteeism_2019%>% arrange(desc(american_indian))
+
+#Answer: 93A, 295, 780, 78A
+```
+
+
+#Now do it for asian  students. 
+```{r}
+
+#1. In 2018
+chronic_absenteeism_2018%>% arrange(desc(asian,na.rm = TRUE))
+
+
+#2. In 2019 
+chronic_absenteeism_2019%>% arrange(desc(asian,na.rm = TRUE))
+```
+
+
+#Now do it for black students
+```{r}
+
+#1. For 2018 
+
+chronic_absenteeism_2018%>% arrange(desc(black))
+#Again with numbers greater than 100 percent. What does this mean??
+
+
+#2. For 2019 
+chronic_absenteeism_2019%>% arrange(desc(asian,na.rm = TRUE))
+```
+
+##Now do it for disabled students. 
+
+```{r}
+
+#1. For 2018 
+chronic_absenteeism_2018%>% arrange(desc(disabled))
+
+
+#2. For 2019 
+chronic_absenteeism_2019%>% arrange(desc(disabled))
+```
+
+
+# Now do it for english learners 
+```{r}
+chronic_absenteeism_2018%>% arrange(desc(english_learners))
+```
+
+
+#Now females. 
+
+```{r}
+chronic_absenteeism_2018%>% arrange(desc(female))
+```
+
+
+#Now hispanic students 
+```{r}
+chronic_absenteeism_2018%>% arrange(desc(hispanic))
+```
+
+#Now male
+
+```{r}
+chronic_absenteeism_2018%>% arrange(desc(male))
+```
+
+
+#Now pacific islanders
+
+```{r}
+chronic_absenteeism_2018%>% arrange(desc(pacific_islander))
+```
+
+
+#Now students of two or more races
+
+```{r}
+chronic_absenteeism_2018%>% arrange(desc(two_or_more_races))
+```
+
+
+#Now white students 
+
+```{r}
+chronic_absenteeism_2018%>% arrange(desc(white))
+```
+
+
+#Let's see which schools have the greatest disparity in percentage of white students who are chronically absent compared to students of color 
+
+```{r}
+chronic_absenteeism_2018 %>% 
+    rowwise() %>% 
+    mutate(`POC_sum` = sum(american_indian, asian, black,hispanic, pacific_islander, two_or_more_races, na.rm = TRUE)) %>% mutate(`POC` = POC_sum/6) %>% mutate(disparity = `POC`-`white`) %>% select(white,POC,disparity) %>% arrange(desc(disparity))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
