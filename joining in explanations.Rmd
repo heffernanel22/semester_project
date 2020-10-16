@@ -1,0 +1,115 @@
+---
+title: "Explanations (Joining in other dataframes)"
+author: "Ellie "hacker(wo)man supreme"
+date: "10/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+#Load in the per pupil expenditure data with nutrition. I just copy-and-pasted this from the website since the excel format was corrupted & scraping wouldn't work with the single stable link.Then you have to put it in OpenRefine to cut leading, trailing and consecutive white space.
+```{r}
+#Load in data 
+library(readr)
+ppe_with_nutrition <- read_csv("/Users/ephmd920/Documents/MEJO 390/semester project/per_pupil_expenditures_edited.csv", 
+    col_types = cols(x10 = col_number(),
+        x11 = col_number(), x2 = col_number(), 
+        x4 = col_number(), x5 = col_number(), 
+        x6 = col_number(), x7 = col_number(), 
+        x8 = col_number(), x9 = col_number()))
+
+#Change column names 
+ppe_with_nutrition <- ppe_with_nutrition[-1,] %>% rename(year = x,district_code = x2 ,district_name = x3 ,state_ppe = x4, state_rank = x5,federal_ppe = x6, federal_rank = x7,local_ppe =x8,local_rank = x9,total_ppe =x10, total_rank =x11) 
+
+
+
+```
+
+#Load in the per pupil expenditure data WITHOUT nutrition.Make the same edits in OpenRefine. 
+
+```{r}
+#Load in data 
+library(readr)
+ppe_without_nutrition <- read_csv("~/Documents/MEJO 390/ppe_without_nutrition-xlsx.csv", 
+    col_types = cols(x10 = col_number(), 
+        x4 = col_number(), x5 = col_number(), 
+        x6 = col_number(), x7 = col_number(), 
+        x8 = col_number(), x9 = col_number()))
+
+#Change column names
+ppe_without_nutrition <- ppe_without_nutrition %>% rename(year = x,district_code = x2 ,district_name = x3 ,state_ppe = x4, state_rank = x5,federal_ppe = x6, federal_rank = x7,local_ppe =x8,local_rank = x9,total_ppe =x10, total_rank =x11) 
+```
+
+
+#Load in the teacher supplement data. Make the same edits in OpenRefine.
+```{r}
+#Load in data 
+library(readr)
+teacher_supplements <- read_csv("/Users/ephmd920/Documents/MEJO 390/semester project/teacher_supplements.csv", 
+    col_types = cols(x_10 = col_number(), 
+        x_11 = col_number(), x_3 = col_number(), 
+        x_4 = col_number(), x_5 = col_number(), 
+        x_6 = col_number(), x_7 = col_number(), 
+        x_8 = col_number(), x_9 = col_number()))
+View(teacher_supplements)
+
+#Change column names 
+teacher_supplements <- teacher_supplements %>% rename(year = x, district_code = x_1, district_name = x_2, total_teachers = x_3, teachers_receiving_supplements = x_4, average_teacher_supplement = x_5, total_principals = x_6, principals_receiving_supplements = x_7, average_principal_supplement = x_8,total_assistant_principals = x_9,assistant_principals_receiving_supplements = x_10, average_assistant_principal_supplement = x_11)
+
+
+```
+
+#I'm having issues joining these three dataframes to the best & worst district dataframes. The district code is in a col_double format here, and it's in a col_character format in those other dataframes.I'll have to do some random stuff. 
+```{r}
+
+#Making a dataframe where district name & district code are next to each other
+for_joins <- disabled_chronic_absenteeism %>% group_by(district_code) %>% summarize(sum(weight))
+
+#Renaming ugly columns
+for_joins <- data.frame(for_joins$district_code,ppe_with_nutrition$district_name) %>% rename(district_code = for_joins.district_code,district_name = ppe_with_nutrition.district_name)
+
+#Left_join in the number of bad schools. Then left join in all of the ppe without nutrition data. 
+worst_districts_ppe_without_nutrition <- left_join(worst_districts,for_joins)
+worst_districts_ppe_without_nutrition <-left_join(worst_districts_ppe_without_nutrition,ppe_without_nutrition,by ="district_name") %>% select(year,district_code.x,district_name,number_of_bad_schools,state_rank,federal_rank,local_rank,total_rank)
+
+
+#Left_join in the number of good schools. Then left join in all of the ppe without nutrition data. 
+best_districts_ppe_without_nutrition <- left_join(best_districts,for_joins)
+best_districts_ppe_without_nutrition <-left_join(best_districts_ppe_without_nutrition,ppe_without_nutrition,by ="district_name") %>% select(year,district_code.x,district_name,number_of_good_schools,state_rank,federal_rank,local_rank,total_rank)
+
+
+#Left_join in the number of bad schools. Then left join in all of the teacher supplement data. 
+worst_districts_teacher_supplements <- left_join(worst_districts,for_joins)
+worst_districts_teacher_supplements <-left_join(worst_districts_teacher_supplements,teacher_supplements,by ="district_name")
+
+worst_districts_teacher_supplements <- worst_districts_teacher_supplements %>% select(year,district_code.x,district_name,number_of_bad_schools,total_teachers,teachers_receiving_supplements,average_teacher_supplement)%>% mutate(teachers_not_receiving_supplements = total_teachers -teachers_receiving_supplements)
+
+
+#Left_join in the number of good schools. Then left join in all of the teacher supplement data. 
+best_districts_teacher_supplements <- left_join(best_districts,for_joins)
+best_districts_teacher_supplements <-left_join(best_districts_teacher_supplements,teacher_supplements,by ="district_name")
+
+best_districts_teacher_supplements <- best_districts_teacher_supplements %>% select(year,district_code.x,district_name,number_of_good_schools,total_teachers,teachers_receiving_supplements,average_teacher_supplement)%>% mutate(teachers_not_receiving_supplements = total_teachers -teachers_receiving_supplements)
+```
+
+
+#Let's sort some stuff and see.
+```{r}
+worst_districts_ppe_without_nutrition %>% arrange(desc(number_of_bad_schools))
+best_districts_ppe_without_nutrition %>% arrange(desc(number_of_good_schools))
+
+
+worst_districts_teacher_supplements%>% arrange(desc(number_of_bad_schools))
+best_districts_teacher_supplements %>% arrange(desc(number_of_good_schools))                                            
+```
+
+#Next steps . . . plot and map 
+
+
+
+
+
+
