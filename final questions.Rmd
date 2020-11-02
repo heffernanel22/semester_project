@@ -1,0 +1,55 @@
+---
+title: "final_questions"
+author: "Ellie "hacker(wo)man supreme" Heffernan"
+date: "11/1/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+#finding out each district's average rate of chronic absenteeism for all students
+district_all_pcts <- all_exact_pcts %>% mutate(district_code = str_sub(agency_code,1,3)) %>% group_by(district_code) %>% summarise(average_all_pct = mean(ALL,na.rm = TRUE))
+
+
+district_all_pcts <- left_join(district_all_pcts,for_joins) %>% arrange(average_all_pct)
+
+#finding out each district's average rate of chronic absenteeism for disabled students
+disabled_all_pcts <- disabled_exact_pcts %>% mutate(district_code = str_sub(agency_code,1,3)) %>% group_by(district_code) %>% summarise(average_disabled_pct = mean(disabled,na.rm = TRUE))
+
+disabled_all_pcts <- left_join(disabled_all_pcts,for_joins) %>% arrange(average_disabled_pct)
+
+disabled_all_pcts
+
+#finding out each district's range of rates of chronic absenteeism for all students
+districts_all_pcts_range <- all_exact_pcts %>% mutate(district_code = str_sub(agency_code,1,3)) %>% group_by(district_code) %>% summarise(all_pct_max = max(ALL,na.rm = TRUE),all_pct_min = min(ALL,na.rm=TRUE)) %>% mutate(range = all_pct_max-all_pct_min)
+
+
+
+#finding out each district's range of  rates of chronic absenteeism for disabled students
+districts_disabled_pcts_range <- disabled_exact_pcts %>% mutate(district_code = str_sub(agency_code,1,3)) %>% group_by(district_code) %>% summarise(disabled_pct_max = max(disabled,na.rm = TRUE),disabled_pct_min = min(disabled,na.rm=TRUE)) %>% mutate(range = disabled_pct_max-disabled_pct_min)
+```
+
+
+#Adding in the district names so we don't have to keep looking up numbers. 
+```{r}
+districts_all_pcts_range <- left_join(districts_all_pcts_range,for_joins)
+
+districts_disabled_pcts_range <- left_join(districts_disabled_pcts_range,for_joins)
+
+#Just arranging the ranges to get some information for our story. 
+district_all_pcts
+disabled_all_pcts
+districts_all_pcts_range %>% arrange(range)
+districts_disabled_pcts_range %>% arrange(range)
+```
+
+#Looking up the individual school that had the highest rates of chronic absenteeism among disabled students in Chapel Hill/Carrboro City Schools. 
+```{r}
+disabled_exact_pcts%>% mutate(district_code =str_sub(agency_code,1,3)) %>% filter(district_code == "681",disabled == "16.66")
+```
+

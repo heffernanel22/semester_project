@@ -1,0 +1,457 @@
+---
+title: "initial data analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+#Load in the data!
+```{r}
+
+#Chronic absenteeism data 
+library(readr)
+chronic_absenteeism <- read_csv("chronic_absenteeism.csv")
+View(chronic_absenteeism)
+
+chronic_absenteeism <- chronic_absenteeism[,1:10]
+
+```
+
+
+#The Agency code's first three digits refer to the school district. The second three refer to the school itself. I want to create a new column that will just show what district the school is. I will use stringr to split the agency_code column in two & make a new column 
+
+```{r}
+chronic_absenteeism <-chronic_absenteeism %>% mutate(district_code = str_sub(chronic_absenteeism$agency_code,1,3))
+  
+  
+```
+
+#KC Elander recommended we remove all schools with percentages greater than 100, all charter schools, and all alternative schools.These schools enroll students later in the year, but they take their "count" data earlier. This is why they may have 400 chronically absent students and only 200 students enrolled. Many of those 400 students may have enrolled later. The data is flawed in this sense, and we should mention it in the story.  Phew. Time for some data cleaning.
+```{r}
+#Remove schools with percentages greater than 100 and look only at the year 2019. 
+chronic_absenteeism <- chronic_absenteeism %>% filter(pct <= 1.00, year == "2019")
+
+
+
+#Create a new column for just the third character in the original agency code. If it's a letter, we will know this is a charter school. Then filter for all the columns where that third character is a NUMBER. This will give us all the rows that ARE NOT charter schools. 
+
+chronic_absenteeism <- chronic_absenteeism %>% mutate(charter_or_lea = 
+ str_sub(chronic_absenteeism$district_code,3)) %>% filter(charter_or_lea == "1" | charter_or_lea == "2"| charter_or_lea =="3"| charter_or_lea =="4" | charter_or_lea == "5" | charter_or_lea == "6" | charter_or_lea == "7" | charter_or_lea == "8" | charter_or_lea == "9"| charter_or_lea == "0") 
+
+
+#Filter out alternative schools. We are not using a very reputable site for this right now, but we will find a better one. 
+
+chronic_absenteeism <-chronic_absenteeism %>% filter(agency_code != "910368",agency_code != "260374" ,agency_code != "040305",agency_code != "550308",agency_code != "770342",agency_code != "530306", agency_code != "160309",agency_code != "650355", agency_code != "300306",agency_code != "60U000", agency_code != "110303", agency_code != "630330", agency_code != "920381", agency_code != "880320",  agency_code != "320322", agency_code != "140306", agency_code != "700310", agency_code != "120308", agency_code != "450343" , agency_code != "260413" , agency_code != "470342" ,agency_code != "650354" , agency_code != "340427" , agency_code != "650345" ,agency_code != "320341" ,agency_code != "540318" , agency_code != "340385" , agency_code != "850324" , agency_code != "980306" ,agency_code != "620310" ,agency_code != "920508" ,
+agency_code != "491305"  , agency_code != "241312" , agency_code != "200322" , agency_code != "680335" , agency_code != "130333" , agency_code != "490350" , agency_code != "410534" ,agency_code != "010378" , agency_code != "810368" , agency_code != "190310" , agency_code != "410533" ,agency_code != "920556" , agency_code != "790392" ,agency_code != "830316" , agency_code != "900365" , agency_code != "840370" ,agency_code != "430345" , agency_code != "640340" ,agency_code != "600439" ,agency_code != "230330" , agency_code != "560350" ,agency_code != "360372" ,agency_code != "530358" ,agency_code != "460488" , agency_code != "990340")
+
+```
+
+Some questions:
+ 1. What is the average rate of chronic absenteeism for all schools for each subgroup? (For example, the average rate of chronic absenteeism among black students, disabled students, white students, etc. )
+ 
+ 2. What schools are stray the furthest from these averages? 
+ 
+ 3. Which school districts stray the furthest? 
+
+
+#What is the average rate of chronic absenteeism for each subgroup (all students, white students, black students, disabled students,etc. )
+```{r}
+chronic_absenteeism %>% group_by(subgroup) %>% summarise(avg_pct_chronically_absent = mean(pct)*100)
+
+
+```
+
+#Now let's found out each school's percentage of  chronically absent students within each subgroup 
+
+```{r}
+subgroup_exact_pcts <- chronic_absenteeism %>% group_by(subgroup,agency_code) %>% summarize(pct = sum(pct)*100) %>% pivot_wider(names_from =subgroup,values_from = pct)
+```
+
+
+#Now we're going to see which schools strayed furthest from the average in each of these subgroups. This will take multiple steps.First Make a new dataframe for each subgroup that shows two columns: agency codes & the exact percentage of chronically absent students in each school for that subgroup 
+```{r}
+names(subgroup_exact_pcts)
+
+all_exact_pcts <- subgroup_exact_pcts %>% select(agency_code, ALL)
+american_indian_exact_pcts <- subgroup_exact_pcts %>% select(agency_code, american_indian)
+asian_exact_pcts <- subgroup_exact_pcts %>% select(agency_code, asian)
+black_exact_pcts <- subgroup_exact_pcts %>% select(agency_code, black)
+disabled_exact_pcts <- subgroup_exact_pcts %>% select(agency_code, disabled)
+english_learners_exact_pcts <- subgroup_exact_pcts %>% select(agency_code, english_learners)
+female_exact_pcts <- subgroup_exact_pcts %>% select(agency_code, female)
+hispanic_exact_pcts <- subgroup_exact_pcts %>% select(agency_code, hispanic)
+male_exact_pcts <-subgroup_exact_pcts %>% select(agency_code, male)
+pacific_islander_exact_pcts <- subgroup_exact_pcts %>% select(agency_code, pacific_islander)
+two_or_more_exact_pcts <- subgroup_exact_pcts %>% select(agency_code, two_or_more_races)
+white_exact_pcts <- subgroup_exact_pcts %>% select(agency_code, white)
+
+
+
+```
+
+
+#Now make two new columns within each of those dataframes. One shows the average percent of students in that subgroup that are chronically absent -- statewide. The other shows the ratio of the statewide average percentage to the  exact percentage in each individual school (Divide exact percentage by average percentage.)
+```{r}
+
+chronic_all_ratio <- all_exact_pcts %>% mutate(average_percentage = 15.8055185, ratio = ALL/15.8055185) 
+chronic_american_indian_ratio <- american_indian_exact_pcts %>% mutate(average_percentage = 1.1762534, ratio = american_indian/1.1762534) 
+chronic_asian_ratio <- asian_exact_pcts %>% mutate(average_percentage = 0.4705221, ratio = asian/0.4705221) 
+chronic_black_ratio <- black_exact_pcts %>% mutate(average_percentage = 5.6600488, ratio = black/5.6600488)
+chronic_disabled_ratio <- disabled_exact_pcts %>%  mutate(average_percentage =3.3787705, ratio = disabled/3.3787705)
+chronic_esl_ratio <- english_learners_exact_pcts %>%  mutate(average_percentage = 1.3910896, ratio = english_learners/1.3910896)
+chronic_female_ratio <- female_exact_pcts %>% mutate(average_percentage = 7.5457246, ratio = female/7.5457246)
+chronic_hispanic_ratio <- hispanic_exact_pcts %>% mutate(average_percentage = 2.8649171, ratio = hispanic/2.8649171)
+chronic_male_ratio <- male_exact_pcts %>%  mutate(average_percentage =8.6773994, ratio = male/8.6773994)
+chronic_pi_ratio <- pacific_islander_exact_pcts %>% mutate(average_percentage =0.2690343, ratio = pacific_islander/0.2690343)
+chronic_two_or_more_ratio <- two_or_more_exact_pcts %>% mutate(average_percentage = 1.0648711,ratio = two_or_more_races/1.0648711)
+chronic_white_ratio <-white_exact_pcts %>%  mutate(average_percentage = 6.9065715, ratio = white/6.9065715)
+
+#This is to help you remember average pcts when typing them in. 
+#ALL	15.8055185
+#american_indian	1.1762534
+#	asian	0.4705221
+#black	5.6600488
+#disabled	3.3787705
+#english_learners	1.3910896
+#female	7.5457246
+#hispanic	2.8649171
+#male	8.6773994
+#pacific_islander	0.2690343
+#two_or_more_races	1.0648711
+#white	6.9065715
+
+```
+
+
+#Now let's arrange all of these databases in ascending and descending order & ask some basic questions.Let's start with the percentages for ALL students by school.  
+```{r}
+
+#How many schools are we looking at? 
+str(chronic_all_ratio)
+#2,496 schools 
+
+#Now arrange them in descending order & create a new column for district code. Also filter to  find out how many schools have at least twice as many chronically absent students as the statewide average. 
+chronic_all_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3))
+#137 out of 2,496 schools are at least twice as high as the average. That's about 5.5 percent of schools. 
+
+
+
+#Now using the district_code column, let's find out if those schools are heavily concentrated in a particular county or counties. Copy the code from the first section. I just split it up for better organization. 
+chronic_all_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) %>% group_by(district_code) %>% summarize(ratio = n()) %>% arrange(desc(ratio))
+#73/137 (more than half of those schools) are concentrated in 10 districts. 
+
+```
+
+#Now do this for American Indians. 
+
+```{r}
+
+#How many schools had american indian students?
+chronic_american_indian_ratio %>% filter(!is.na(american_indian))
+#742 schools. 
+
+
+#Now arrange them in descending order & create a new column for district code. Also filter to  find out how many schools have at least twice as many chronically absent students as the statewide average. 
+chronic_american_indian_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) 
+#77 of 742 schools have at least twice the statewide average. That's about 10.4 percent. 
+
+
+
+#Now using the district_code column, let's find out if those schools are heavily concentrated in a particular county or counties. Copy the code from the first section. I just split it up for better organization. 
+chronic_american_indian_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) %>% group_by(district_code) %>% summarize(ratio = n()) %>% arrange(desc(ratio))
+#All of these schools are concentrated in 11 school districts. Almost half are concentrated in a single school district. 780.
+
+```
+
+
+
+
+#Now do this for black students. 
+```{r}
+#How many schools had black  students?
+chronic_black_ratio %>% filter(!is.na(black))
+#2,255 schools
+
+#Now arrange them in descending order & create a new column for district code. Also filter to  find out how many schools have at least twice as many chronically absent students as the statewide average. 
+chronic_black_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) 
+
+#296 of 2,255 schools have rates of chronic absenteeism that are at least twice as high as the statewide average. That's about 13 percent. 
+
+
+
+#Now using the district_code column, let's find out if those schools are heavily concentrated in a particular county or counties. Copy the code from the first section. I just split it up for better organization. 
+chronic_black_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) %>% group_by(district_code) %>% summarize(ratio = n()) %>% arrange(desc(ratio))
+
+#185 of these 296 are concentrated in 10 districts. About half are concentrated in just six districts. 
+
+
+```
+
+
+
+#Now do this for disabled students
+```{r}
+#How many schools had disabled  students?
+chronic_disabled_ratio %>% filter(!is.na(disabled))
+#2,375 schools
+
+#Now arrange them in descending order & create a new column for district code. Also filter to  find out how many schools have twice as many chronically absent students as the statewide average. 
+chronic_disabled_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) 
+
+#114 out of 2,375 schools had rates of chronic absenteeism at least twice as high as the average percentage.That's about 4.8 percent of schools. 
+
+
+#Now using the district_code column, let's find out if those schools are heavily concentrated in a particular county or counties. Copy the code from the first section. I just split it up for better organization. 
+chronic_disabled_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) %>% group_by(district_code) %>% summarize(ratio = n()) %>% arrange(desc(ratio))
+
+#52 of these schools are concentrated in 10 districts. About 45 percent. 
+
+```
+
+
+
+#Now do this for english learners. 
+
+```{r}
+#How many schools had english learners?
+chronic_esl_ratio %>% filter(!is.na(english_learners))
+#2,010. 
+
+
+#Now arrange them in descending order & create a new column for district code. Also filter to  find out how many schools have twice as many chronically absent students as the statewide average. Using the district_code column, let's find out if those schools are heavily concentrated in a particular county or counties. Copy the code from the first section. I just split it up for better organization. 
+chronic_esl_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) 
+#248 out of 2,010 schools had rates of chronic absenteeism that were at least double the statewide rates. This is about 12 percent.  
+
+
+
+#Now using the district_code column, let's find out if those schools are heavily concentrated in a particular county or counties. Copy the code from the first section. I just split it up for better organization. 
+chronic_esl_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) %>% group_by(district_code) %>% summarize(ratio = n()) %>% arrange(desc(ratio))
+#194/248 of these are concentrated in 10 school districts. That's about 78 percent. 
+
+```
+
+
+#Now do this for females
+
+```{r}
+
+#How many schools had females?
+chronic_female_ratio %>% filter(!is.na(female))
+#2,484 schools had females. 
+
+ 
+
+#Now arrange them in descending order & create a new column for district code. Also filter to  find out how many schools have twice as many chronically absent students as the statewide average. Using the district_code column, let's find out if those schools are heavily concentrated in a particular county or counties. Copy the code from the first section. I just split it up for better organization. 
+chronic_female_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) 
+#143 schools out of 2,484 had chronic absenteeism rates at least double the statewide average.That's about 5.76 percent. 
+
+
+#Now using the district_code column, let's find out if those schools are heavily concentrated in a particular county or counties. Copy the code from the first section. I just split it up for better organization. 
+chronic_female_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) %>% group_by(district_code) %>% summarize(ratio = n()) %>% arrange(desc(ratio))
+#76/143 of these were concentrated in 10 counties. A little more than 50 percent. 
+
+```
+
+
+#Now do this for males
+
+```{r}
+#How many schools had males?
+chronic_male_ratio %>% filter(!is.na(male))
+#2,461 schools had males.  
+
+#Now arrange them in descending order & create a new column for district code. Also filter to  find out how many schools have twice as many chronically absent students as the statewide average.
+chronic_male_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3))
+#134 out of 2,461 schools. About 5.44 percent. 
+
+
+#Now using the district_code column, let's find out if those schools are heavily concentrated in a particular county or counties. Copy the code from the first section. I just split it up for better organization. 
+chronic_male_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) %>% group_by(district_code) %>% summarize(ratio = n()) %>% arrange(desc(ratio))
+#73/134 are concentrated in 10 counties. That's about 54 percent. 
+
+
+```
+
+#Now do this for pacific islanders
+
+```{r}
+
+#How many schools had pacific islanders?
+chronic_pi_ratio %>% filter(!is.na(pacific_islander))
+#321 schools had pacifc islanders. 
+
+
+#Now arrange them in descending order & create a new column for district code. Also filter to  find out how many schools have twice as many chronically absent students as the statewide average.  
+chronic_pi_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) 
+#33 out of 321 schools had rates of chronic absenteeism that were at least double the statewide averages.That's about 10.3 percent.  
+
+
+
+#Now using the district_code column, let's find out if those schools are heavily concentrated in a particular county or counties. Copy the code from the first section. I just split it up for better organization. 
+chronic_pi_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) %>% group_by(district_code) %>% summarize(ratio = n()) %>% arrange(desc(ratio))
+#26 of these 33 are concentrated in 10 districts. That's about 78.8 percent. 
+
+
+```
+
+
+
+#Now do this for students of two or more races 
+
+```{r}
+#How many schools had students of two or more races? 
+chronic_two_or_more_ratio %>% filter(!is.na(two_or_more_races))
+#2,211 schools had students of two or more races. 
+
+#Now arrange them in descending order & create a new column for district code. Also filter to  find out how many schools have twice as many chronically absent students as the statewide average. 
+chronic_two_or_more_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) 
+#199 out of these 2,211 schools had rates of chronic absenteeism that were at least double the statewide averages. That's about 9 percent. 
+
+
+
+#Now using the district_code column, let's find out if those schools are heavily concentrated in a particular county or counties. Copy the code from the first section. I just split it up for better organization. 
+chronic_two_or_more_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) %>% group_by(district_code) %>% summarize(ratio = n()) %>% arrange(desc(ratio))
+#94 of these 199 were concentrated in 10 school districts. That's about 47 percent. 
+
+```
+
+
+#Now do this for white students
+
+```{r}
+
+#How many schools have white students? 
+chronic_white_ratio %>% filter(!is.na(white))
+#2,453 schools have white students. 
+
+#Now arrange them in descending order & create a new column for district code. Also filter to  find out how many schools have twice as many chronically absent students as the statewide average.
+chronic_white_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) 
+#231 out of these 2,453 have chronic absenteeism rates at least double the statewide average. That's about 9.41 percent. 
+
+
+
+#Now using the district_code column, let's find out if those schools are heavily concentrated in a particular county or counties. Copy the code from the first section. I just split it up for better organization. 
+chronic_white_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) %>% group_by(district_code) %>% summarize(ratio = n()) %>% arrange(desc(ratio))
+#83 of these 231 are concentrated in 10 school districts. That's about 35.9 percent. 
+
+```
+
+
+#Now do this for asian students
+
+```{r}
+
+#How many schools have asian students?
+chronic_asian_ratio %>% filter(!is.na(asian))
+#996 schools have white students. 
+
+
+#Now arrange them in descending order & create a new column for district code. Also filter to  find out how many schools have twice as many chronically absent students as the statewide average.
+chronic_asian_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) 
+#104 out of 996 schools have rates of chronic absenteeism that are at least twice as high as the statewide average. That's about 10.44 percent. 
+
+
+
+#Now using the district_code column, let's find out if those schools are heavily concentrated in a particular county or counties. Copy the code from the first section. I just split it up for better organization. 
+chronic_asian_ratio %>% arrange(desc(ratio)) %>% filter(ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) %>% group_by(district_code) %>% summarize(ratio = n()) %>% arrange(desc(ratio))
+#98/104 of these are concentrated in 10 districts. That's about 94 percent. 
+
+```
+
+
+#I want to end up with a dataframe that shows me one school in each row. The columns will be percent of chronically absent white students, percent of chronically absent students of color, the ratio of each school's white student percentage to that statewide average, and the ratio of each school's student of color percentage to the statewide average. Then I will make another column that compares these two numbers with each other. A fifth column, a ratio between the ratios. Essentially, I want to see if there are some schools whose rates of chronic absenteeism deviate from the statewide average more for students of color than white students, and if so .. how much. 
+
+
+#Make a new dataframe for each ethnicity that will make it easy to join these dataframes together with left_join. 
+```{r}
+ messy_white_data <- chronic_white_ratio %>% select(agency_code,white,ratio) %>% rename(white_ratio = ratio,white_pct = white)
+
+ messy_black_data <- chronic_black_ratio %>% select(agency_code,black,ratio) %>% rename(black_ratio = ratio,black_pct = black)
+
+  messy_american_indian_data <- chronic_american_indian_ratio %>% select(agency_code,american_indian,ratio) %>% rename(american_indian_ratio = ratio,american_indian_pct = american_indian)
+
+ messy_hispanic_data <- chronic_hispanic_ratio %>% select(agency_code,hispanic,ratio) %>% rename(hispanic_ratio = ratio,hispanic_pct = hispanic)
+
+ messy_pi_data <- chronic_pi_ratio %>% select(agency_code,pacific_islander,ratio) %>% rename(pi_ratio = ratio,pi_pct = pacific_islander)
+ 
+  messy_two_or_more_data <- chronic_two_or_more_ratio %>% select(agency_code,two_or_more_races,ratio) %>% rename(two_or_more_ratio = ratio,two_or_more_pct = two_or_more_races)
+  
+   messy_asian_data <- chronic_asian_ratio %>% select(agency_code,asian,ratio) %>% rename(asian_ratio = ratio,asian_pct = asian)
+```
+
+
+#Join it all together!
+```{r}
+goodgood1 <- left_join(messy_white_data,messy_black_data)
+
+goodgood2 <- left_join(goodgood1,messy_american_indian_data)
+
+goodgood3 <-left_join(goodgood2,messy_hispanic_data)
+
+goodgood4 <- left_join(goodgood3,messy_pi_data)
+
+goodgood5 <- left_join(goodgood4,messy_two_or_more_data)
+
+theultimategoodgood <- left_join(goodgood5,messy_asian_data)
+```
+
+
+#Alright, now you are going to make two new columns: average people of color percent & average people of color ratio. This is turning out to be difficult due to the NAs so I am going to mess around and see what I can do. There is a good chance I have overcomplicated this but c'est la vie. 
+```{r}
+#Only get the percents 
+x <- theultimategoodgood %>% select(american_indian_pct,asian_pct,black_pct,hispanic_pct,pi_pct, two_or_more_pct)
+
+#Only get the ratios
+y <- theultimategoodgood %>% select(american_indian_ratio,asian_ratio,black_ratio,hispanic_ratio,pi_ratio, two_or_more_ratio)
+
+
+#Now find the sums of all the percents in each row & convert each to dataframes
+poc_pct_sums <-as.data.frame(poc_pct_sums <- rowSums(x,na.rm = TRUE, dims =1))
+ 
+ #Now find the sums of all the ratios in each row
+ poc_ratio_sums <- as.data.frame(poc_ratio_sums <- rowSums(y,na.rm = TRUE, dims =1))
+ 
+ #Now make a very ugly data.frame whose columns include: the poc_ratio_sums, the poc_pct_sums, the white ratio, white percents for each school. 
+comparing_ratios <- data.frame(theultimategoodgood$agency_code, poc_pct_sums,poc_ratio_sums, theultimategoodgood$white_pct,theultimategoodgood$white_ratio)
+
+#Rename those ugly column names!
+names(comparing_ratios) <- c("agency_code","poc_pct_sums","poc_ratio_sums","white_pcts","white_ratios")
+
+#Now turn those sum columns into average columns & only select columns we need. 
+comparing_ratios <- comparing_ratios %>% mutate(poc_average_ratios = poc_ratio_sums/6, poc_average_pcts = poc_pct_sums/6, ratio_ratio = poc_average_ratios / white_ratios) %>% select(agency_code, white_pcts,white_ratios,poc_average_ratios,poc_average_pcts,ratio_ratio)
+
+#Let's see what schools' rates of chronic absenteeism for students of color stray further from the average than they do for white students. 
+comparing_ratios %>% filter(ratio_ratio >= 2.00) %>% arrange(desc(ratio_ratio))
+str(comparing_ratios)
+#432/2,548 schools. That's about 16.6%
+
+
+#Now where are these schools concentrated? 
+comparing_ratios %>% filter(ratio_ratio >= 2.00) %>% mutate(district_code = str_sub(agency_code,1,3)) %>% group_by(district_code) %>% summarize(ratio_ratio = n()) %>% arrange(desc(ratio_ratio))
+
+
+#352/432 concentrated in just 10 school districts. About 81 percent. What is going on in district 600??
+
+#^this math is slightly off because I had to reload the dataframes because of a typo It's close enough for us to make a useful estimate that helps us notice something peculiar occurring here. We can recalculate for more exact statistics later. 
+```
+
+
+`
+
+
+
+Notes on angle: A lot of interesting stuff here! I'm most interested to focus on one of these three topics: disabled students, english learner students, or the gap in chronic absenteeism among students of color v. white students attending the same schools in the same districts. 
+
+Regardless of which we choose, our next steps would be to reach out to contacts related to those schools. Teachers, professors, students, etc. Then we would join our dataframes data from the statistical profiles provided by K.C. Elander to answer two overarching questions:
+- What are the impacts of higher chronic absenteeism rates?
+      (does this correlate with lower test scores, graduation outcomes, SATs, etc.)
+- Why might this be happening?
+  (we hypothesize schools have lower funding or staffing and the statistical profiles provide data on that as well! )
+
+
+
+
