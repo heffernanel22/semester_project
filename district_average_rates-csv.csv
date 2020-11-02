@@ -1,0 +1,117 @@
+Column,district_code,average_pct,district_name
+1,182,0.113498,Newton-Conover City Schools
+2,810,0.0742410666666667,Rutherford County Schools
+3,660,0.0700313953488372,Northampton County Schools
+4,460,0.0698371875,Hertford County Schools
+5,930,0.0683226495726496,Warren County Schools
+6,040,0.0670385638297872,Anson County Schools
+7,420,0.0658642857142857,Halifax County Schools
+8,291,0.0656539772727273,Lexington City Schools
+9,870,0.0637043859649123,Swain County Schools
+10,910,0.0622162313432836,Vance County Schools
+11,520,0.0608509090909091,Jones County Schools
+12,960,0.0579151583710407,Wayne County Public Schools
+13,170,0.0549394736842105,Caswell County Schools
+14,422,0.0540967741935484,Weldon City Schools
+15,780,0.0540449427480916,Robeson County Schools
+16,690,0.0536606060606061,Pamlico County Schools
+17,590,0.0518113805970149,McDowell County Schools
+18,340,0.051454090548054,Forsyth County Schools
+19,830,0.0480624254473161,Scotland County Schools
+20,260,0.0473704380542865,Cumberland County Schools
+21,790,0.0471475121951219,Rockingham County Schools
+22,410,0.0466817636472705,Guilford County Schools
+23,530,0.0460598557692308,Lee County Schools
+24,390,0.0458446902654867,Granville County Schools
+25,880,0.0455114942528736,Transylvania County Schools
+26,850,0.045277731092437,Stokes County Schools
+27,840,0.0450826018808777,Stanly County Schools
+28,360,0.0450157722818479,Gaston County Schools
+29,230,0.0448174057649667,Cleveland County Schools
+30,010,0.0443588101983003,Alamance-Burlington Schools
+31,610,0.0443322580645161,Mitchell County Schools
+32,240,0.0442919724770642,Columbus County Schools
+33,500,0.044230223880597,Jackson County Schools
+34,570,0.0441511111111111,Madison County Schools
+35,700,0.0434881481481482,Pasquotank County Schools
+36,540,0.0430931818181818,Lenoir County Schools
+37,580,0.0429077235772358,Martin County Schools
+38,370,0.0427301470588235,Gates County Schools
+39,480,0.0423,Hyde County Schools
+40,380,0.041703488372093,Graham County Schools
+41,100,0.0415203409090909,Brunswick County Schools
+42,350,0.0413913793103448,Franklin County Schools
+43,730,0.0410971014492754,Person County Schools
+44,330,0.0406422330097087,Edgecombe County Schools
+45,080,0.0400398550724638,Bertie County Schools
+46,720,0.0397966666666667,Perquimans County Schools
+47,320,0.039684503851382,Durham Public Schools
+48,060,0.0396262711864407,Avery County Schools
+49,140,0.0395965994962217,Caldwell County Schools
+50,710,0.039036319218241,Pender County Schools
+51,600,0.0385561711639789,Charlotte-Mecklenburg Schools
+52,640,0.0384793979303857,Nash-Rocky Mount Schools
+53,090,0.0384113636363636,Bladen County Schools
+54,070,0.0383357819905213,Beaufort County Schools
+55,280,0.0383213855421687,Dare County Schools
+56,200,0.0382340611353712,Cherokee County Schools
+57,800,0.0382074372759857,Rowan-Salisbury Schools
+58,181,0.0379332142857143,Hickory City Schools
+59,670,0.0378892670157068,Onslow County Schools
+60,470,0.0372122203098107,Hoke County Schools
+61,132,0.0369135638297872,Kannapolis City Schools
+62,050,0.0366366336633663,Ashe County Schools
+63,270,0.0364663636363636,Currituck County Schools
+64,421,0.0363762626262626,Roanoke Rapids City Schools
+65,290,0.0362303405572755,Davidson County Schools
+66,510,0.0361561506276151,Johnston County Schools
+67,650,0.0358612690019828,New Hanover County Schools
+68,241,0.035687074829932,Whiteville City Schools
+69,620,0.0355703883495146,Montgomery County Schools
+70,292,0.0351902597402597,Thomasville City Schools
+71,300,0.0350501285347044,Davie County Schools
+72,770,0.0349142857142857,Richmond County Schools
+73,250,0.0345186585365854,Craven County Schools
+74,995,0.0344820895522388,Yancey County Schools
+75,950,0.0340924137931034,Watauga County Schools
+76,295,0.0336,Innovative School District
+77,940,0.0333972222222222,Washington County Schools
+78,680,0.0333425968109339,Orange County Schools
+79,550,0.0329458461538462,Lincoln County Schools
+80,820,0.0325086666666667,Sampson County Schools
+81,120,0.0324572504708098,Burke County Schools
+82,560,0.0318869387755102,Macon County Schools
+83,111,0.0308547008547009,Asheville City Schools
+84,740,0.0302803482587065,Pitt County Schools
+85,210,0.0297427272727273,Edenton-Chowan Schools
+86,860,0.0296997448979592,Surry County Schools
+87,160,0.0294792270531401,Carteret County Schools
+88,430,0.0292430253623188,Harnett County Schools
+89,920,0.0289770116396761,Wake County Schools
+90,630,0.0284180740740741,Moore County Schools
+91,110,0.0283390138408305,Buncombe County Schools
+92,440,0.0283350649350649,Haywood County Schools
+93,491,0.0281615625,Mooresville City Schools
+94,990,0.0281413533834586,Yadkin County Schools
+95,750,0.0279732142857143,Polk County Schools
+96,862,0.0276325581395349,Mount Airy City Schools
+97,980,0.027380042462845,Wilson County Schools
+98,450,0.0267578783151326,Henderson County Schools
+99,760,0.0254991596638655,Randolph County Schools
+100,900,0.0253137422360248,Union County Public Schools
+101,030,0.024919696969697,Alleghany County Schools
+102,020,0.0245802884615385,Alexander County Schools
+103,150,0.0242425,Camden County Schools
+104,220,0.0242173076923077,Clay County Schools
+105,490,0.024087021013597,Iredell-Statesville Schools
+106,761,0.0238296703296703,Asheboro City Schools
+107,180,0.023428550295858,Catawba County Schools
+108,890,0.02302,Tyrrell County Schools
+109,970,0.0223223756906077,Wilkes County Schools
+110,130,0.0222889770723104,Cabarrus County Schools
+111,190,0.0218403846153846,Chatham County Schools
+112,310,0.0213134210526316,Duplin County Schools
+113,681,0.0196545685279188,Chapel Hill-Carrboro Schools
+114,400,0.0191528846153846,Greene County Schools
+115,821,0.0157358695652174,Clinton City Schools
+116,861,0.00706428571428571,Elkin City Schools
